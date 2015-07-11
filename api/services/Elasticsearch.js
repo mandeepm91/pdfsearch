@@ -10,52 +10,66 @@ var path = require('path');
 Promise.promisifyAll(fs);
 
 module.exports = {
-	search: search,
-	indexDocument: indexDocument,
-	indexAllFilesInDirectory: indexAllFilesInDirectory
+  search: search,
+  indexDocument: indexDocument,
+  indexFile: indexFile,
+  indexAllFilesInDirectory: indexAllFilesInDirectory,
+  showAllFilesContentInDirectory: showAllFilesContentInDirectory
 }
 
-
-
 function search(query){
-	return esClient.search({
-		"index": "pdfsearch",
-		"type": "lecture",
-		"body": {
-			"query": {
-				"match": {
-					"_all": query
-				}
-			}
-		}
-	}).then(function (result){
-		return result.hits.hits
-	})
+  return esClient.search({
+    "index": "pdfsearch",
+    "type": "lecture",
+    "body": {
+      "query": {
+        "match": {
+          "content": query
+        }
+      }
+    }
+  }).then(function (result){
+    return result.hits.hits
+  })
 }
 
 function indexAllFilesInDirectory(directoryPath){
-	// iterate through all the files in given directory relative to $HOME
-	// call the PDFService.extract function on each and index them to ES
-	var directory = path.join(process.env.HOME, directoryPath)
-	return fs.readdirAsync(directory).then(function (files){
-		return Promise.map(files, function (fileName){
-			return indexFile(path.join(directory, fileName)) 
-		})
-	})
+  // iterate through all the files in given directory relative to $HOME
+  // call the PDFService.extract function on each and index them to ES
+  var directory = path.join(process.env.HOME, directoryPath)
+  return fs.readdirAsync(directory).then(function (files){
+    return Promise.map(files, function (fileName){
+      return indexFile(path.join(directory, fileName)) 
+    })
+  })
 }
 
+
+function showAllFilesContentInDirectory(directoryPath){
+  // iterate through all the files in given directory relative to $HOME
+  // call the PDFService.extract function on each and index them to ES
+  var directory = path.join(process.env.HOME, directoryPath)
+  return fs.readdirAsync(directory).then(function (files){
+    return Promise.map(files, function (fileName){
+      return PDFService.extractContents(path.join(directory, fileName)).then(sails.log.info)
+    })
+  })
+}
+
+
+
 function indexFile(fileName){
-	sails.log.info("extractContents from file", fileName)
-	return PDFService.extractContents(fileName).then(indexDocument)
+  sails.log.info("extractContents from file", fileName)
+  return PDFService.extractContents(fileName).then(indexDocument)
 }
 
 function indexDocument(content){
-	var body = {
-		"content": content
-	}
-	return esClient.index({
-		"index": "pdfsearch",
-		"type": "lecture",
-		"body": body
-	})
+  var body = {
+    "content": content
+  }
+  return esClient.index({
+    "index": "pdfsearch",
+    "type": "lecture",
+    "body": body
+  })
 }
