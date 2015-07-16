@@ -2,8 +2,8 @@
 var elasticsearch = require('elasticsearch');
 var async = require('async');
 var Promise = require('bluebird')
-var esConfig = _.cloneDeep(sails.config.dbconfig.esConfig)
-var esClient = elasticsearch.Client(esConfig)
+// var esConfig = _.cloneDeep(sails.config.dbconfig.esConfig)
+var esClient = elasticsearch.Client()
 var fs = require('fs')
 var path = require('path');
 
